@@ -1,0 +1,91 @@
+#! /bin/bash
+
+# filename:
+# Author: Gerson Lindor Jr.  (lindorg@oregontate.edu)
+# Date Created: January 13, 2020
+# Last Modified: January 13, 2020
+
+
+#
+main() {
+ls
+}
+
+
+#
+scriptError() {
+ls
+
+
+}
+
+
+#
+pathFinding() {
+
+ls
+
+}
+
+#
+operations() {
+ls
+
+
+}
+
+
+#
+stdinOps() {
+ls
+
+
+
+}
+
+
+#
+otherOps() {
+ls
+
+
+}
+
+
+#
+dims() {
+ls
+
+
+}
+
+
+#
+transpose () {
+ls
+
+
+
+}
+
+
+#### Running the Script ####
+
+datafilepath="datafile$$"
+
+# handle any errors that effects the script as a whole:
+# ./matrix or matrix cannot be the last argument
+# the matrix file is readable
+# generate path of file via stdin or a file
+if [ "$#" = "1" ]
+then
+    cat > "$datafilepath"
+elif [ "$#" = "2" ]
+then
+    datafilepath=$2
+fi
+
+
+    
+
+
