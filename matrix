@@ -5,11 +5,16 @@
 # Date Created: January 13, 2020
 # Last Modified: January 13, 2020
 
+# Debugger mode
+set -x
+#set -v
 
 
 #
 main() {
-    operations $1
+    echo -e "(main) 1 = $1"
+    echo -e "(main) 2 = $2"
+    operations $1 $2
 }
 
 
@@ -28,14 +33,39 @@ ls
 
 }
 
+#@param: $1 - the name of the operations
 #
 operations() {
     local flag=0;
-    echo -e "param 1 in operations = $1" ##########################################
-    echo -e "param 0 = $0" #####################################################
+    local fileFlag=0
+    local argsFlag=0
+#    echo -e "param 1 in operations = $1" ##########################################
+#    echo -e "param 0 = $0" #####################################################
     # check argument count
+    local opArgs=2  # the expected amount of arguments for dims, transpose, and mean operations
+    #######################local argCount=$#
+#    echo -e "(operations) actual arg count = $numOfArgs"
+#    echo -e "(operations) expected arg count = $opArgs"
     # check if file is readable
+#    echo -e "datafilepath = $datafilepath"
+#    echo -e "argument 2 is $2"
     fileIsReadable
+    fileFlag=$?
+    if [ $1 = "add" -o $1 = "multiply" ]
+    then
+        opArgs=3  # the expected amount of arguments for add and multiply operations
+    fi
+    checkArgCount $opArgs $numOfArgs
+    argFlag=$?
+    if [ $fileFlag = 2 -a $argFlag = 0 ]
+    then
+        echo -e "Argument count is $numOfArgs but the file named by argument is not readable" 1>&2
+        exit 1
+    elif [ $argFlag = 1 ]
+    then
+        echo "Argument count is greater than 1" 1>&2
+        exit 1
+    fi
     if [ $1 = "dims" ]
     then
         dims
@@ -45,20 +75,61 @@ operations() {
 }
 
 
+#
 fileIsReadable() {
     # test if file exist and it's readable
-    echo -e "This is the file: $datafilepath" #######################################################
+    #echo -e "(fileIsReadable) This is the file: $1" #######################################################
+    local checkSecondFile=0
     if [ -e "$datafilepath" ]
     then
-        if [ ! -r "$datafilepath" ]  # test if the file is not readable
+        test -e $matrixB
+        checkSecondFile=$?
+        if [ "$checkSecondFile" = 1 -a "$numOfArgs" = 3 ]
         then
-            echo -e "The file $datafilepath is not readable" 1>&2
+            echo -e "The file does not exist" 1>&2
             exit 1
         fi
+        if [ -r $datafilepath ]  # test if the file is readable for mean, transpose, and dims
+        then
+            if [ "$numofArgs" = 2 ]
+            then
+                return 0
+            fi
+        elif [ ! -r "$datafilepath" -o ! -r "$matrixB" ]
+        then
+            return 2
+        fi
     else
-        echo -e "The file $datafilepath does not exist" 1>&2
+        echo -e "The file does not exist" 1>&2
         exit 1
     fi
+    return 0
+}
+
+
+eitherFileISReadable() {
+ls
+    #change datafilepath to file in position $1
+    #call fileIsReadable
+    #change datafilepath to file in postion $1
+    #call fileIsReadable
+    # give error message  either file is not readable
+
+}
+
+
+#@params: $1 - expected argument count
+#         $2 - actual script argument count
+checkArgCount() {
+    if [ $1 -lt $2 ]
+    then
+        return 1
+    elif [ $1 -gt $2 ]
+    then
+        echo "Argument count is less than the required number of arguments" 1>&2
+        exit 1
+    fi
+    return 0
 }
 
 
@@ -95,6 +166,7 @@ dims() {
 }
 
 
+#
 showDims() {
     # display matrix dimensions
     echo -e "$rows $cols"
@@ -116,21 +188,35 @@ datafilepath="datafile$$"
 opsName="N/A"
 rows=0
 cols=0
+numOfArgs="$#"
 
 
 # handle any errors that effects the script as a whole:
 # ./matrix or matrix cannot be the last argument
 # the matrix file is readable
 # generate path of file via stdin or a file
-if [ "$#" = "1" ]
+
+
+#if [ "$#" -lt "3" ]
+#then
+if [ "$numOfArgs" = "1" ]
 then
     cat > "$datafilepath"
-elif [ "$#" = "2" ]
+elif [ "$numOfArgs" -ge "2" ]
 then
     datafilepath=$2
+    if [ "$numOfArgs" -ge "3" ]
+    then
+        matrixB=$3
+    fi
 fi
+#fi
 
-main $1
+# echo  -e "The argument count of the script: $#"
+
+# main $1 $2
+
+operations $1 
     
 
 
