@@ -30,13 +30,34 @@ ls
 
 #
 operations() {
-    echo -e "param 1 in operations = $1"
-    echo -e "param 0 = $0"
+    local flag=0;
+    echo -e "param 1 in operations = $1" ##########################################
+    echo -e "param 0 = $0" #####################################################
     # check argument count
     # check if file is readable
+    fileIsReadable
     if [ $1 = "dims" ]
     then
-        dims 
+        dims
+        flag=$?
+    fi
+    return $flag
+}
+
+
+fileIsReadable() {
+    # test if file exist and it's readable
+    echo -e "This is the file: $datafilepath" #######################################################
+    if [ -e "$datafilepath" ]
+    then
+        if [ ! -r "$datafilepath" ]  # test if the file is not readable
+        then
+            echo -e "The file $datafilepath is not readable" 1>&2
+            exit 1
+        fi
+    else
+        echo -e "The file $datafilepath does not exist" 1>&2
+        exit 1
     fi
 }
 
@@ -64,13 +85,18 @@ dims() {
     rows=$( cat $datafilepath | wc -l )
     # get columns
     local line=$( head -1 $datafilepath ) # grap the first line
-    echo -e "line = $line"
     # count the number of elements in a line to find the number of columns
     for i in $line
     do
         cols=$(( cols + 1 ))
     done
-    # final output
+    showDims
+    return 0
+}
+
+
+showDims() {
+    # display matrix dimensions
     echo -e "$rows $cols"
 }
 
