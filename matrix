@@ -6,9 +6,10 @@
 # Last Modified: January 13, 2020
 
 
+
 #
 main() {
-ls
+    operations $1
 }
 
 
@@ -29,13 +30,18 @@ ls
 
 #
 operations() {
-ls
-
-
+    echo -e "param 1 in operations = $1"
+    echo -e "param 0 = $0"
+    # check argument count
+    # check if file is readable
+    if [ $1 = "dims" ]
+    then
+        dims 
+    fi
 }
 
 
-#
+# may not use this
 stdinOps() {
 ls
 
@@ -44,7 +50,7 @@ ls
 }
 
 
-#
+#  may not use this
 otherOps() {
 ls
 
@@ -54,9 +60,18 @@ ls
 
 #
 dims() {
-ls
-
-
+    # get rows
+    rows=$( cat $datafilepath | wc -l )
+    # get columns
+    local line=$( head -1 $datafilepath ) # grap the first line
+    echo -e "line = $line"
+    # count the number of elements in a line to find the number of columns
+    for i in $line
+    do
+        cols=$(( cols + 1 ))
+    done
+    # final output
+    echo -e "$rows $cols"
 }
 
 
@@ -72,6 +87,10 @@ ls
 #### Running the Script ####
 
 datafilepath="datafile$$"
+opsName="N/A"
+rows=0
+cols=0
+
 
 # handle any errors that effects the script as a whole:
 # ./matrix or matrix cannot be the last argument
@@ -85,7 +104,7 @@ then
     datafilepath=$2
 fi
 
-
+main $1
     
 
 
