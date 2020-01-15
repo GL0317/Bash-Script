@@ -211,10 +211,9 @@ mean()  {
      done < $tempFileD
      # change the file with mean values from columns to rows
      local hold=$( cat "$tempFileB" | tr '\n' '\t' )
-     # trim off the tab character and the end of a line
+     # trim off the tab character at the end of a line
      hold="${hold%?}"
      echo -e "$hold" > "$tempFileC"
-     #######cat "$tempFileB" | tr '\n' '\t' > "$tempFileC"
      cat "$tempFileC"
      return 0
 }
@@ -232,10 +231,6 @@ tempFileA="tempA$$"
 tempFileB="tempB$$"
 tempFileC="tempC$$"
 tempFileD="tempD$$"
-
-
-# Create temp files
-#touch "$tempFileA"
 
 
 # generate path of file via stdin or a file
