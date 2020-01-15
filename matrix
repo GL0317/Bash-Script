@@ -55,6 +55,10 @@ operations() {
     then
         transpose
         flag=$?
+    elif [ $1 = "mean" ]
+    then
+        mean
+        flag=$?
     fi
     removeAllTemp
     return $flag
@@ -183,6 +187,36 @@ transpose () {
 
 removeAllTemp() {
     rm -f "$tempFileA"
+    rm -f "$tempFileB"
+    rm -f "$tempFileC"
+    rm -f "$tempFileD"
+}
+
+
+mean()  {
+    local sum=0
+    # call transpose to make it easier to read each line and calculate the sum
+    transpose > "$tempFileD"
+    while read line
+    do
+        # in a loop calculate the sum
+        sum=0
+        for i in $line
+        do
+            sum=$((i + sum))
+        done
+        # calculate the average and append result to a file
+        local avg=$(( (sum + (rows/2)*( (sum>0)*2-1)) / rows ))
+        echo -e "$avg" >> "$tempFileB"
+     done < $tempFileD
+     # change the file with mean values from columns to rows
+     local hold=$( cat "$tempFileB" | tr '\n' '\t' )
+     # trim off the tab character and the end of a line
+     hold="${hold%?}"
+     echo -e "$hold" > "$tempFileC"
+     #######cat "$tempFileB" | tr '\n' '\t' > "$tempFileC"
+     cat "$tempFileC"
+     return 0
 }
 
 
@@ -195,10 +229,13 @@ rows=0
 cols=0
 numOfArgs="$#"
 tempFileA="tempA$$"
+tempFileB="tempB$$"
+tempFileC="tempC$$"
+tempFileD="tempD$$"
 
 
 # Create temp files
-touch "$tempFileA"
+#touch "$tempFileA"
 
 
 # generate path of file via stdin or a file
@@ -215,6 +252,7 @@ then
 fi
 # run dims, transpose, mean, add, or multiply
 operations $1 
+rm -f datafile*
     
 
 
