@@ -3,7 +3,7 @@
 # filename:
 # Author: Gerson Lindor Jr.  (lindorg@oregontate.edu)
 # Date Created: January 13, 2020
-# Last Modified: January 13, 2020
+# Last Modified: January 14, 2020
 
 # Debugger mode
 #set -x
@@ -47,7 +47,16 @@ operations() {
     then
         dims
         flag=$?
+        if [ "$flag" = 0 ]
+        then
+            showDims
+        fi
+    elif [ $1 = "transpose" ]
+    then
+        transpose
+        flag=$?
     fi
+    removeAllTemp
     return $flag
 }
 
@@ -134,7 +143,6 @@ dims() {
     do
         cols=$(( cols + 1 ))
     done
-    showDims
     return 0
 }
 
@@ -148,9 +156,35 @@ showDims() {
 
 #
 transpose () {
-ls
-
+    local index=1
+    
+    # get the dimensions of the matrix
+    dims
+    until [ "$index" -gt "$cols" ]
+    do
+        # turn column to a row
+        local turnToRow="$( cut -f$index $datafilepath | tr '\n' '\t' )"
+        # remove the extra tab character at the end
+        turnToRow="${turnToRow%?}" 
+        # if index equals to 1, then redirect the file
+        if [ "$index" = 1 ]
+        then
+            echo -e "$turnToRow" > "$tempFileA"
+        else
+            # otherwise append to the same file
+            echo -e "$turnToRow" >> "$tempFileA"
+        fi
+        # increment index
+        index=$(( index + 1 ))
+    done
+    cat "$tempFileA"
 }
+
+
+removeAllTemp() {
+    rm -f "$tempFileA"
+}
+
 
 
 #### Running the Script ####
@@ -160,6 +194,11 @@ opsName="N/A"
 rows=0
 cols=0
 numOfArgs="$#"
+tempFileA="tempA$$"
+
+
+# Create temp files
+touch "$tempFileA"
 
 
 # generate path of file via stdin or a file
