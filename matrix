@@ -10,14 +10,6 @@ trap "echo 'Signal received, exiting'; cleanUp; exit 0" INT HUP TERM
 # set -x
 
 
-#
-scriptError() {
-ls
-
-
-}
-
-
 #@param: $1 - the name of the operations
 #
 operations() {
@@ -80,11 +72,6 @@ operations() {
 #
 fileIsReadable() {
     # Argument count cannot be 0
-#    if [ "$numofArgs" = 1 ]
-#    then
-#        echo -e "operations must have arguments" 1>&2
-#        exit 1
-#    fi
     # test if file exist and it's readable
     local checkSecondFile=0
     if [ -e "$datafilepath" ]
@@ -137,20 +124,6 @@ checkArgCount() {
         exit 1
     fi
     return 0
-}
-
-
-# may not use this
-stdinOps() {
-ls
-
-}
-
-
-#  may not use this
-otherOps() {
-ls
-
 }
 
 
@@ -243,34 +216,22 @@ mean()  {
 }
 
 
+#
 add () {
     #check for matching dimennsions
-    # get the dimensions of datafilepath
-#    dims
-#    local rowsOfA=$rows
-#    local colsOfA=$cols
-    # swap values between variables
-#    swapMatrix
-    # get the dimensions of datafilepath with the swapped matrix
-#    dims
-#    local rowsOfB=$rows
-#    local colsOfB=$cols
-#    if [ "$rowsOfA" != "$rowsOfB" -o "$colsOfA" != "$colsOfB" ]
-#    then
-#        echo "The dimensions do not allow them to be added together following the rules of matrix addition" 1>&2
-#        exit 1
-#    fi
     checkDimensions $1
     # add matrices:  matrixB + datafilepath
     return 0
 }
 
 
+#
 multiply() {
     #check dimensions
     checkDimension $1
     return 0
 }
+
 
 #
 #@params: $1 holds the name of operations add or multiply
@@ -314,7 +275,7 @@ swapMatrix() {
 }
 
 
-#### Running the Script ####
+#### Run Script ####
 
 datafilepath="datafile$$"
 opsName="N/A"
@@ -326,19 +287,8 @@ tempFileB="tempB$$"
 tempFileC="tempC$$"
 tempFileD="tempD$$"
 found=1
-
-
 commandArg=$0
-#echo -e "command arg = $commandArg" ##########################
 
-#for args in $@
-#do
-#    if [ "$args" = "./matrix" ]
-#    then
-#        found=0
-#        break
-#    fi
-#done
 
 # checking that command is "matrix"
 if [ "$commandArg" != "./matrix" ]
@@ -354,7 +304,7 @@ then
     exit 1
 fi
 
-# check for correct number of argument for add and multiply
+# check for correct number of argument for add and multiply operations
 if [ "$numOfArgs" -le 2 ]
 then
     if [ "$1" = "add" -o "$1" = "multiply" ]
@@ -363,6 +313,7 @@ then
         exit 1
     fi
 fi
+
 # generate path of file via stdin or a file
 if [ "$numOfArgs" = "1" ]
 then
@@ -375,29 +326,6 @@ then
         matrixB=$3
     fi
 fi
-# checking that command is "matrix"
-#if [ "$0" != "matrix" -o "$0" != "./matrix" ]  
-#then
-#    if [ "$_" != "matrix" -o "$_" != "./matrix" ]
-#    then
-#        echo "Command must be matrix" 1>&2
-#    fi
-#fi
-
-#for args in $@
-#do
-#    if [ "$args" = "./matrix" ]
-#    then
-#        found=0
-#    fi
-#done
-#if [ "$found" = 1 ]
-#then
-#    echo "Error: Bad command" 1>&2
-#    exit 1
-#fi
-      
-
 
 # run dims, transpose, mean, add, or multiply
 operations $1 
