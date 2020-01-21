@@ -1,4 +1,5 @@
 #! /bin/bash
+trap "echo 'Signal received, exiting'; cleanUp; exit 0" INT HUP TERM
 
 # filename:
 # Author: Gerson Lindor Jr.  (lindorg@oregontate.edu)
@@ -6,7 +7,7 @@
 # Last Modified: January 14, 2020
 
 # Debugger mode
-#set -x
+# set -x
 
 
 #
@@ -59,6 +60,17 @@ operations() {
     then
         mean
         flag=$?
+    elif [ $1 = "add" ]
+    then
+        add "add"
+        flag=$?
+    elif [ $1 = "multiply" ]
+    then
+        multiply "multiply"
+        flag=$?
+    else
+        echo "Error: Bad command" 1>&2
+        exit 1
     fi
     removeAllTemp
     return $flag
@@ -67,6 +79,12 @@ operations() {
 
 #
 fileIsReadable() {
+    # Argument count cannot be 0
+#    if [ "$numofArgs" = 1 ]
+#    then
+#        echo -e "operations must have arguments" 1>&2
+#        exit 1
+#    fi
     # test if file exist and it's readable
     local checkSecondFile=0
     if [ -e "$datafilepath" ]
@@ -193,6 +211,12 @@ removeAllTemp() {
 }
 
 
+cleanUp() {
+    removeAllTemp
+    rm -f datafile*
+}
+
+
 mean()  {
     local sum=0
     # call transpose to make it easier to read each line and calculate the sum
@@ -219,6 +243,76 @@ mean()  {
 }
 
 
+add () {
+    #check for matching dimennsions
+    # get the dimensions of datafilepath
+#    dims
+#    local rowsOfA=$rows
+#    local colsOfA=$cols
+    # swap values between variables
+#    swapMatrix
+    # get the dimensions of datafilepath with the swapped matrix
+#    dims
+#    local rowsOfB=$rows
+#    local colsOfB=$cols
+#    if [ "$rowsOfA" != "$rowsOfB" -o "$colsOfA" != "$colsOfB" ]
+#    then
+#        echo "The dimensions do not allow them to be added together following the rules of matrix addition" 1>&2
+#        exit 1
+#    fi
+    checkDimensions $1
+    # add matrices:  matrixB + datafilepath
+    return 0
+}
+
+
+multiply() {
+    #check dimensions
+    checkDimension $1
+    return 0
+}
+
+#
+#@params: $1 holds the name of operations add or multiply
+checkDimensions() {
+    #check for matching dimennsions
+    # get the dimensions of datafilepath
+    dims
+    local rowsOfA=$rows
+    local colsOfA=$cols
+    # swap values between variables
+    swapMatrix
+    # get the dimensions of datafilepath with the swapped matrix
+    dims
+    local rowsOfB=$rows
+    local colsOfB=$cols
+    # check dimennsions for add or multiply operations
+    if [ "$1" = "add" ]
+    then
+        if [ "$rowsOfA" != "$rowsOfB" -o "$colsOfA" != "$colsOfB" ]
+        then
+            echo -n "The dimensions of the input matrices do not allow them to be" 1>&2
+            echo " added together following the rules of matrix addition" 1>&2
+            exit 1
+        fi
+    elif [ "$1" = "multiply" ]
+    then
+        if [ "$colsOfA" != "$rowsOfB" ]
+        then
+            echo -n "The dimensions of the input matrices do not allow them to be" 1>&2
+            echo " mutltiplied together following the rules of matrix multiplication" 1>&2
+            exit 1
+        fi
+     fi
+}
+
+
+swapMatrix() {
+    local temp=$datafilepath
+    datafilepath=$matrixB
+    matrixB=$temp
+}
+
 
 #### Running the Script ####
 
@@ -231,8 +325,44 @@ tempFileA="tempA$$"
 tempFileB="tempB$$"
 tempFileC="tempC$$"
 tempFileD="tempD$$"
+found=1
 
 
+commandArg=$0
+#echo -e "command arg = $commandArg" ##########################
+
+#for args in $@
+#do
+#    if [ "$args" = "./matrix" ]
+#    then
+#        found=0
+#        break
+#    fi
+#done
+
+# checking that command is "matrix"
+if [ "$commandArg" != "./matrix" ]
+then
+    echo "Error: Bad command" 1>&2
+    exit 1
+fi
+
+# check that the operation is correct
+if [ "$1" != "dims" -a "$1" != "transpose" -a "$1" != "mean" -a "$1" != "add" -a "$1" != "multiplay" ]
+then
+    echo "Error: bad operations" 1>&2
+    exit 1
+fi
+
+# check for correct number of argument for add and multiply
+if [ "$numOfArgs" -le 2 ]
+then
+    if [ "$1" = "add" -o "$1" = "multiply" ]
+    then
+        echo -e "operations 'add' and 'multiply' must have 3 arguments" 1>&2
+        exit 1
+    fi
+fi
 # generate path of file via stdin or a file
 if [ "$numOfArgs" = "1" ]
 then
@@ -245,6 +375,30 @@ then
         matrixB=$3
     fi
 fi
+# checking that command is "matrix"
+#if [ "$0" != "matrix" -o "$0" != "./matrix" ]  
+#then
+#    if [ "$_" != "matrix" -o "$_" != "./matrix" ]
+#    then
+#        echo "Command must be matrix" 1>&2
+#    fi
+#fi
+
+#for args in $@
+#do
+#    if [ "$args" = "./matrix" ]
+#    then
+#        found=0
+#    fi
+#done
+#if [ "$found" = 1 ]
+#then
+#    echo "Error: Bad command" 1>&2
+#    exit 1
+#fi
+      
+
+
 # run dims, transpose, mean, add, or multiply
 operations $1 
 rm -f datafile*
