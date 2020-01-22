@@ -299,33 +299,17 @@ multiply() {
     #check dimensions
     checkDimensions $1
     # read first matrix
-    # in while loop: read aRow
     while read aRow
     do
         local colIndex=1
-        echo "read aRow = $aRow"    #########################
-        echo "-------------"   ######################## 
-        echo "file count = $fileCount" #############################
-        echo "-----------------------" ###############################
         # get all the columns of the second matrix
-        # in for loop from 1 to $cols:
         until [ "$colIndex" -gt "$cols" ]
         do
-#            echo "colIndex = $colIndex" ###########################
-#            echo "---------------------" ###########################
             # get the row of first matrix
-#            # ################# echo -e "1\t2\t3\t4" > $tempA
             echo "$aRow" > $tempA
-#            echo "tempA is: "    #########################
-#            cat $tempA
-#            echo "-------------"   ######################## 
-
             # get each column of the second matrix
-            ######################## echo -e "1\n3\n5\n7" > $tempB
             cut -f$colIndex $datafilepath > $tempB
             sum=$( productAndSum $tempA $tempB )
-            echo "sum = $sum" #################################################
-            echo "-------------" ############################################
             colIndex=$(( colIndex + 1 ))
             # set up numeric temp files
             if [ "$fileCount" -lt 10 ]
@@ -336,22 +320,13 @@ multiply() {
             fi
             # append sum to a unique numeric temp file
             echo "$sum" >> $file
-            echo "This is $file:"  ###############################
-            cat $file              ###############################
-            echo "------------------"     ###########################
         done
-        echo "This is $file after for-loop:"  ###############################
-        cat $file              ###############################
-        echo "------------------"     ###########################
         # change file from columns to rows
         local turnToRow=$( cat $file | tr '\n' '\t' )
         # remove extra tab at the end
          turnToRow="${turnToRow%?}"
         # copy row back to the same file
         echo "$turnToRow" > $file
-        echo "This is $file after changing it to rows:"  ###############################
-        cat $file              ###############################
-        echo "------------------"     ###########################
         fileCount=$(( fileCount + 1 ))
     # end while loop < $matrixB -----
     done < $matrixB
