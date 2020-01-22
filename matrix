@@ -4,12 +4,7 @@ trap "echo 'Signal received, exiting'; cleanUp; exit 0" INT HUP TERM
 # filename:
 # Author: Gerson Lindor Jr.  (lindorg@oregontate.edu)
 # Date Created: January 13, 2020
-<<<<<<< HEAD
-# Last Modified: January 20, 2020
-=======
 # Last Modified: January 22, 2020
->>>>>>> integrationTest
-
 
 
 #@param: $1 - the name of the operations
