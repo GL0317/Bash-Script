@@ -4,7 +4,11 @@ trap "echo 'Signal received, exiting'; cleanUp; exit 0" INT HUP TERM
 # filename:
 # Author: Gerson Lindor Jr.  (lindorg@oregontate.edu)
 # Date Created: January 13, 2020
+<<<<<<< HEAD
 # Last Modified: January 20, 2020
+=======
+# Last Modified: January 22, 2020
+>>>>>>> integrationTest
 
 
 
@@ -179,6 +183,8 @@ removeAllTemp() {
     rm -f "$tempFileB"
     rm -f "$tempFileC"
     rm -f "$tempFileD"
+    rm -f "$tempFileE"
+    rm -f "$tempFileF"
 }
 
 
@@ -214,20 +220,149 @@ mean()  {
 }
 
 
-#
-add () {
-    #check for matching dimennsions
+add() {
+    local limit=0
+    # verify dimensions
     checkDimensions $1
-    # add matrices:  matrixB + datafilepath
+    limit=$(( $cols + 1 ))
+    local index=1
+    until [ "$index" = "$limit" ]
+    do
+        local tempPrev="tempNum$(( index - 1 ))"
+        local tempCurrent="tempNum$index"
+        # this will create unique temp file with numbers at the end
+        if [ "$index" -lt 10 ]
+        then
+            tempCurrent="tempNum0$index"
+        fi
+        # take the columns of the two matrices and combine them to a new file
+        mergeColumns $matrixB $datafilepath $index > $tempFileA
+        # sum each row of the combined file
+        sumOfRows $tempFileA > $tempFileB
+        rm -f $tempFileD  # delete file for the next row
+        # copy sum file to unique temp files
+        index=$(( $index + 1 ))
+        cat $tempFileB > $tempCurrent
+    done
+    # Display results
+     paste tempNum* > $tempFileF 
+     cat  $tempFileF
+     rm -f tempNum*
+}
+
+
+#
+# @params: $1 is the first matrix
+#          $2 is the second matrix
+#          $3 is the value of a index
+mergeColumns() {
+    local columnA
+    local columnB
+
+    # take column of first matrix
+    cut -f$3 $1 > $tempFileA
+    # take column of second matrix
+    cut -f$3 $2 > $tempFileB
+    # paste them together to another file
+    paste $tempFileA $tempFileB > $tempFileC
+    # cat new file to stdout
+    cat $tempFileC
+}
+
+
+#
+# @params: $1 is a matrix
+sumOfRows() {
+    local sum=0
+
+    while read line
+    do
+        # in a loop calculate the sum
+        sum=0
+        for i in $line
+        do
+            sum=$((i + sum))
+        done
+        echo -e "$sum" >> $tempFileD
+     done < $1
+     cat $tempFileD
+}
+
+
+
+
+#
+multiply() {
+    local tempA="tempFA$$"
+    local tempB="tempFB$$"
+    local colIndex=1
+    local fileCount=1
+
+    #check dimensions
+    checkDimensions $1
+    # read first matrix
+    while read aRow
+    do
+        local colIndex=1
+        # get all the columns of the second matrix
+        until [ "$colIndex" -gt "$cols" ]
+        do
+            # get the row of first matrix
+            echo "$aRow" > $tempA
+            # get each column of the second matrix
+            cut -f$colIndex $datafilepath > $tempB
+            sum=$( productAndSum $tempA $tempB )
+            colIndex=$(( colIndex + 1 ))
+            # set up numeric temp files
+            if [ "$fileCount" -lt 10 ]
+            then
+                local file="file0$fileCount"
+            else
+                local file="file$fileCount"
+            fi
+            # append sum to a unique numeric temp file
+            echo "$sum" >> $file
+        done
+        # change file from columns to rows
+        local turnToRow=$( cat $file | tr '\n' '\t' )
+        # remove extra tab at the end
+         turnToRow="${turnToRow%?}"
+        # copy row back to the same file
+        echo "$turnToRow" > $file
+        fileCount=$(( fileCount + 1 ))
+    # end while loop < $matrixB -----
+    done < $matrixB
+    # concatenate all temp files to result
+    cat file* > $tempFileC
+    rm -f file* tempFA* tempFB*
+    cat $tempFileC
     return 0
 }
 
 
 #
-multiply() {
-    #check dimensions
-    checkDimension $1
-    return 0
+# @params: $1 - the row of the first matrix
+#          $2 - column of the second matrix
+productAndSum() {
+    local sum=0
+    local j=1
+    local product=0
+    local firstOperand=$(cat $tempA )
+
+    # second matrix's column to rows
+    cat $2 > $tempFileA
+    local secondMatrix=$( cat $tempFileA | tr '\n' '\t' )
+     secondMatrix="${secondMatrix%?}"
+     echo "$secondMatrix" > $tempFileB
+    # calculate the product and the sum
+    for i in $firstOperand
+    do
+        local secondOperand=$( cut -f$j $tempFileB )
+        product=$(( i * secondOperand ))
+        sum=$(( sum + product ))
+        j=$(( j + 1 ))
+    done
+    echo "$sum"
 }
 
 
@@ -242,6 +377,9 @@ checkDimensions() {
     # swap values between variables
     swapMatrix
     # get the dimensions of datafilepath with the swapped matrix
+    # reset dimensions
+    rows=0
+    cols=0
     dims
     local rowsOfB=$rows
     local colsOfB=$cols
@@ -284,6 +422,8 @@ tempFileA="tempA$$"
 tempFileB="tempB$$"
 tempFileC="tempC$$"
 tempFileD="tempD$$"
+tempFileE="tempE$$"
+tempFileF="tempF$$"
 found=1
 commandArg=$0
 
@@ -296,7 +436,7 @@ then
 fi
 
 # check that the operation is correct
-if [ "$1" != "dims" -a "$1" != "transpose" -a "$1" != "mean" -a "$1" != "add" -a "$1" != "multiplay" ]
+if [ "$1" != "dims" -a "$1" != "transpose" -a "$1" != "mean" -a "$1" != "add" -a "$1" != "multiply" ]
 then
     echo "Error: bad operations" 1>&2
     exit 1
