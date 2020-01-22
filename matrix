@@ -4,7 +4,7 @@ trap "echo 'Signal received, exiting'; cleanUp; exit 0" INT HUP TERM
 # filename:
 # Author: Gerson Lindor Jr.  (lindorg@oregontate.edu)
 # Date Created: January 13, 2020
-# Last Modified: January 14, 2020
+# Last Modified: January 22, 2020
 
 # Debugger mode
 # set -x
@@ -291,9 +291,101 @@ sumOfRows() {
 
 #
 multiply() {
+    local tempA="tempFA$$"
+    local tempB="tempFB$$"
+    local colIndex=1
+    local fileCount=1
+
     #check dimensions
-    checkDimension $1
+    checkDimensions $1
+    # read first matrix
+    # in while loop: read aRow
+    while read aRow
+    do
+        local colIndex=1
+        echo "read aRow = $aRow"    #########################
+        echo "-------------"   ######################## 
+        echo "file count = $fileCount" #############################
+        echo "-----------------------" ###############################
+        # get all the columns of the second matrix
+        # in for loop from 1 to $cols:
+        until [ "$colIndex" -gt "$cols" ]
+        do
+#            echo "colIndex = $colIndex" ###########################
+#            echo "---------------------" ###########################
+            # get the row of first matrix
+#            # ################# echo -e "1\t2\t3\t4" > $tempA
+            echo "$aRow" > $tempA
+#            echo "tempA is: "    #########################
+#            cat $tempA
+#            echo "-------------"   ######################## 
+
+            # get each column of the second matrix
+            ######################## echo -e "1\n3\n5\n7" > $tempB
+            cut -f$colIndex $datafilepath > $tempB
+            sum=$( productAndSum $tempA $tempB )
+            echo "sum = $sum" #################################################
+            echo "-------------" ############################################
+            colIndex=$(( colIndex + 1 ))
+            # set up numeric temp files
+            if [ "$fileCount" -lt 10 ]
+            then
+                local file="file0$fileCount"
+            else
+                local file="file$fileCount"
+            fi
+            # append sum to a unique numeric temp file
+            echo "$sum" >> $file
+            echo "This is $file:"  ###############################
+            cat $file              ###############################
+            echo "------------------"     ###########################
+        done
+        echo "This is $file after for-loop:"  ###############################
+        cat $file              ###############################
+        echo "------------------"     ###########################
+        # change file from columns to rows
+        local turnToRow=$( cat $file | tr '\n' '\t' )
+        # remove extra tab at the end
+         turnToRow="${turnToRow%?}"
+        # copy row back to the same file
+        echo "$turnToRow" > $file
+        echo "This is $file after changing it to rows:"  ###############################
+        cat $file              ###############################
+        echo "------------------"     ###########################
+        fileCount=$(( fileCount + 1 ))
+    # end while loop < $matrixB -----
+    done < $matrixB
+    # concatenate all temp files to result
+    cat file* > $tempFileC
+    rm -f file* tempFA* tempFB*
+    cat $tempFileC
     return 0
+}
+
+
+#
+# @params: $1 - the row of the first matrix
+#          $2 - column of the second matrix
+productAndSum() {
+    local sum=0
+    local j=1
+    local product=0
+    local firstOperand=$(cat $tempA )
+
+    # second matrix's column to rows
+    cat $2 > $tempFileA
+    local secondMatrix=$( cat $tempFileA | tr '\n' '\t' )
+     secondMatrix="${secondMatrix%?}"
+     echo "$secondMatrix" > $tempFileB
+    # calculate the product and the sum
+    for i in $firstOperand
+    do
+        local secondOperand=$( cut -f$j $tempFileB )
+        product=$(( i * secondOperand ))
+        sum=$(( sum + product ))
+        j=$(( j + 1 ))
+    done
+    echo "$sum"
 }
 
 
@@ -367,7 +459,7 @@ then
 fi
 
 # check that the operation is correct
-if [ "$1" != "dims" -a "$1" != "transpose" -a "$1" != "mean" -a "$1" != "add" -a "$1" != "multiplay" ]
+if [ "$1" != "dims" -a "$1" != "transpose" -a "$1" != "mean" -a "$1" != "add" -a "$1" != "multiply" ]
 then
     echo "Error: bad operations" 1>&2
     exit 1
