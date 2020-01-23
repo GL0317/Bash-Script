@@ -1,14 +1,37 @@
 #! /bin/bash
 trap "echo 'Signal received, exiting'; cleanUp; exit 0" INT HUP TERM
 
-# filename:
+# NAME: matrix - performs matrix addition, multiplication, and it also calculates
+#                   the dimensions and mean of a matrix, and the program swaps a matrix 
+#                   of dimension M x N to N x M.
+#
+# SYNOPSYS:
+#   matrix OPERATION [ARGUMENT]  
+# 
+# DESCRIPTION:
+#     The five operations of matrix are: dims, transpose, mean, add, and multiply
+#     The program verifies that each operation have the correct number of arguments,
+#     and it verifies that "matrix" is the command used before every operation. 
+#      
+#     The operations dims, transpose, and mean are able to read a matrix via stdin
+#     Ex.  cat [MATRIX] | ./matrix dims
+#     Operations add and multiply do not process input via stdin
+#     The usage of the five operations are as follows:
+#     matrix dims [MATRIX]
+#     matrix transpose [MATRIX]
+#     matrix mean [MATRIX]
+#     matrix add MATRIX_LEFT MATRIX_RIGHT
+#     matrix multiply MATRIX_LEFT MATRIX_RIGHT
 # Author: Gerson Lindor Jr.  (lindorg@oregontate.edu)
 # Date Created: January 13, 2020
 # Last Modified: January 22, 2020
 
 
+# Controls the uses of all matrix operations
+# Verifies that all files are readable, and verifies that argument count is correct
+#   for all operations
 #@param: $1 - the name of the operations
-#
+#@return: 0 - success, otherwise exits with a value 1
 operations() {
     local flag=0;
     local fileFlag=0
@@ -66,9 +89,11 @@ operations() {
 }
 
 
-#
+# Determines if matrix files exist and are readable
+# @return:  0 - success
+#           exit 1 - for files that does not exist
+#           2 - for files that exist but are not readable
 fileIsReadable() {
-    # Argument count cannot be 0
     # test if file exist and it's readable
     local checkSecondFile=0
     if [ -e "$datafilepath" ]
@@ -98,19 +123,11 @@ fileIsReadable() {
 }
 
 
-eitherFileISReadable() {
-ls
-    #change datafilepath to file in position $1
-    #call fileIsReadable
-    #change datafilepath to file in postion $1
-    #call fileIsReadable
-    # give error message  either file is not readable
-
-}
-
-
-#@params: $1 - expected argument count
-#         $2 - actual script argument count
+# Verifies that the expected number of argument match the actual argument
+#@params:   $1 - expected argument count
+#           $2 - actual script argument count
+#@returm:   0 - success, arguments match
+#           exit 1 - arguments do not match  
 checkArgCount() {
     if [ $1 -lt $2 ]
     then
@@ -124,7 +141,9 @@ checkArgCount() {
 }
 
 
-#
+# Calculates the dimensions of a matrix
+# Output:   rows columns
+# @return:  0 - correct dimensions are calculated
 dims() {
     # get rows
     rows=$( cat $datafilepath | wc -l )
@@ -139,14 +158,17 @@ dims() {
 }
 
 
-#
+# Outputs the dimensions of a matrix
+# @precondition:    function dims must be called prior to usage
 showDims() {
     # display matrix dimensions
     echo -e "$rows $cols"
 }
 
 
-#
+# Inverses the dimensions of matrix
+# Example:  if matrix file has dimension M x N, then
+#           M x N => N x M
 transpose () {
     local index=1
     
@@ -173,6 +195,7 @@ transpose () {
 }
 
 
+# Removes all globally declared tempfiles
 removeAllTemp() {
     rm -f "$tempFileA"
     rm -f "$tempFileB"
@@ -183,12 +206,15 @@ removeAllTemp() {
 }
 
 
+# Removes all tempfile, and the matrix in stored in the datafile variable
 cleanUp() {
     removeAllTemp
     rm -f datafile*
 }
 
 
+# Calculates the average of all rows in each column
+# Example: (matrix) M x N => 1 x N
 mean()  {
     local sum=0
     # call transpose to make it easier to read each line and calculate the sum
@@ -215,6 +241,11 @@ mean()  {
 }
 
 
+# Performs matrix addition on two matrices, and returns a new matrix with the same dimension
+# but sum values
+# @precondition:  left matrix and right matrix must have the same dimensions
+# @return:  0 - addition successful
+#           1 - Dimensions do not match
 add() {
     local limit=0
     # verify dimensions
@@ -246,7 +277,8 @@ add() {
 }
 
 
-#
+# Mergest the column of one matrix with another column of another matrix
+# The combined columns are directed to a new file
 # @params: $1 is the first matrix
 #          $2 is the second matrix
 #          $3 is the value of a index
@@ -265,7 +297,8 @@ mergeColumns() {
 }
 
 
-#
+# Reads a matrix file and calculates the sum of each row and stores the
+#   results to another file as a column
 # @params: $1 is a matrix
 sumOfRows() {
     local sum=0
@@ -284,9 +317,13 @@ sumOfRows() {
 }
 
 
-
-
-#
+# Performs matrix multiplication using two matrices
+# Example: 
+#           if matrix A is M x N and matrix B is N x P
+#           then
+#               A * B => M x P matrix
+# @precondition:   The columm of the first operand matrix must equal in size to the
+#                   row of the second oprand matrix
 multiply() {
     local tempA="tempFA$$"
     local tempB="tempFB$$"
@@ -335,9 +372,11 @@ multiply() {
 }
 
 
-#
+# Implements matrix multiplication using one row
+#   of one matrix and one column of another matrix
 # @params: $1 - the row of the first matrix
 #          $2 - column of the second matrix
+# returns the sum of the products of each elements in a row of one matrix and in a column of another matrix
 productAndSum() {
     local sum=0
     local j=1
@@ -361,8 +400,10 @@ productAndSum() {
 }
 
 
-#
-#@params: $1 holds the name of operations add or multiply
+# Verifies that the dimensions of two matrices follow rules for matrix addition or 
+# matrix multiplication.  This depends on the operation used.
+# @params: $1 holds the name of operations add or multiply
+# Function exits 1 if there is a violation
 checkDimensions() {
     #check for matching dimennsions
     # get the dimensions of datafilepath
@@ -399,6 +440,7 @@ checkDimensions() {
 }
 
 
+# Switches the global variable assignment of two matrix files 
 swapMatrix() {
     local temp=$datafilepath
     datafilepath=$matrixB
